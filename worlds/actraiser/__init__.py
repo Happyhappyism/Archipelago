@@ -5,7 +5,6 @@ import dataclasses
 import os
 import typing
 import math
-import random
 import threading
 
 from .Client import ActraiserSNIClient
@@ -208,7 +207,7 @@ class ActraiserWorld(World):
         if self.options.include_traps:
             filler_items.extend(["Skull Trap","Redirect Trap"])
             filler_weights.extend([0.3, 0.4])
-        junk_item = random.choices(filler_items,filler_weights)[0]
+        junk_item = self.random.choices(filler_items,filler_weights)[0]
         return junk_item
 
     def modify_multidata(self, multidata: dict):
