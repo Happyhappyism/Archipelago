@@ -170,7 +170,7 @@ item_data_table: Dict[str, PokePinballItemData] = {
         code=0x1C2034,
         type=ItemClassification.filler,
         fillweight=0.4,
-        recv_text= "Gotta Catch em All!",
+        #recv_text= "Gotta Catch em All!",
         num_exist=0,
     ),
     "Evolution Mode": PokePinballItemData(
@@ -188,7 +188,7 @@ item_data_table: Dict[str, PokePinballItemData] = {
         num_exist=0,
     ),
     "Ball Upgrade": PokePinballItemData(
-        code=0x1C2008,
+        code=0x1C2038,
         type=ItemClassification.filler,
         fillweight=0.5,
         num_exist = 0,

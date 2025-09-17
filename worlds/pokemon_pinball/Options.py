@@ -83,7 +83,7 @@ class MapColor(Toggle):
     display_name = "Randomize Map Colors"
 
 class RequiredMons(OptionSet):
-    """Which Pokeon are required to be caught to clear the game, leave blank if you don't want any"""
+    """Which Pokemon are required to be caught to clear the game, leave blank if you don't want any"""
     valid_keys = {
     "Bulbasaur",
     "Ivysaur",

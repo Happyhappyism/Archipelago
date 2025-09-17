@@ -116,22 +116,22 @@ def write_tokens(world:World, patch:PokePinballProcedurePatch):
         for startoffset, endoffset in mon_pal_offsets.items():
             offset = startoffset
             while offset < endoffset:
-                pal1 = random.randint(0, 0x7FFF),
-                pal2 = random.randint(0, 0x7FFF),
+                pal1 = world.random.randint(0, 0x7FFF),
+                pal2 = world.random.randint(0, 0x7FFF),
                 patch.write_token(APTokenTypes.WRITE, offset+2, pal1[0].to_bytes(2, "little"))
                 patch.write_token(APTokenTypes.WRITE, offset+4, pal2[0].to_bytes(2, "little"))
                 offset += 0x08
     if world.options.map_colors:
         invalid_offsets = [0x00,0x06,0x08,0x0E]
         for color, offsets in field_pal_data.items():
-            clr = random.randint(0, 0x7FFF),
+            clr = world.random.randint(0, 0x7FFF),
             for offset in offsets:
                 if offset & 0xF not in invalid_offsets:
                     patch.write_token(APTokenTypes.WRITE, offset, clr[0].to_bytes(2, "little"))
         #offset = 0xDC880
         ##while offset < 0xdd140:
-         #       pal1 = random.randint(0, 0x7FFF),
-         #       pal2 = random.randint(0, 0x7FFF),
+         #       pal1 = world.random.randint(0, 0x7FFF),
+         #       pal2 = world.random.randint(0, 0x7FFF),
          #       patch.write_token(APTokenTypes.WRITE, offset+2, pal1[0].to_bytes(2, "little"))
          #       patch.write_token(APTokenTypes.WRITE, offset+4, pal2[0].to_bytes(2, "little"))
          #       offset += 0x08

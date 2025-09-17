@@ -104,7 +104,7 @@ class BombTSAWorld(World):
         valid_startingstones = ["Fire Stone","Ice Stone","Wind Stone","Earth Stone","Lightning Stone","Light Stone","Dark Stone"]
         self.startbomb = self.options.start_element.value
         if self.startbomb == 7:
-            self.startbomb = random.randint(0,4)
+            self.startbomb = self.random.randint(0,4)
         self.multiworld.push_precollected(self.create_item(valid_startingstones.pop(self.startbomb)))
         for element in valid_startingstones:
             item_pool.append(self.create_item(element))
@@ -114,7 +114,7 @@ class BombTSAWorld(World):
                         "Neverland Coordinates","Epikyur Coordinates","Thantos Coordinates"]
         planet_count = (self.options.start_planet.value - 1 )
         if planet_count:
-            random.shuffle(planet_items)
+            self.random.shuffle(planet_items)
             for x in range(planet_count):
                 self.multiworld.push_precollected(self.create_item(planet_items.pop(0)))
         for planet in planet_items:
@@ -186,9 +186,9 @@ class BombTSAWorld(World):
         # Place Pommy Genes in Shop Parts
         if self.options.pommyshop:
             genes = POMMY_SHOP_GENES
-            random.shuffle(genes)
+            self.random.shuffle(genes)
             parts = SHOP_PART_LOCS
-            random.shuffle(parts)
+            self.random.shuffle(parts)
             for gene in genes:
                 #self.pommy_shop_hint_map[gene] = parts[0]
                 shop_part = parts.pop(0)
@@ -201,7 +201,7 @@ class BombTSAWorld(World):
         if self.options.include_traps:
             filler_items.extend(["Stun Trap","Panic Bomb Trap","Fire Trap","Reverse Trap"])
             filler_weights.extend([0.3,0.4,0.3,0.4])
-        junk_item = random.choices(filler_items,filler_weights)[0]
+        junk_item = self.random.choices(filler_items,filler_weights)[0]
         return junk_item
 
     def set_rules(self) -> None:

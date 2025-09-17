@@ -1,11 +1,13 @@
 import Utils
 import typing
+import logging
+from typing import Optional
 from Utils import read_snes_rom
 from worlds.AutoWorld import World
 from worlds.Files import APDeltaPatch, APProcedurePatch, APTokenMixin, APTokenTypes, APPatchExtension
 #from .Locations import lookup_id_to_name, all_locations
 #from typing import TYPE_CHECKING
-
+from pkgutil import get_data
 #if TYPE_CHECKING:
 #from . import ActraiserWorld
 
@@ -26,10 +28,11 @@ MUSIC_TABLE = 0x36D9E
 import hashlib
 import os
 import math
-import random
+#import random
 #import struct
 
 from .rom_routines import *
+logger = logging.getLogger("Actraiser")
 
 class ActraiserProcedurePatch(APProcedurePatch, APTokenMixin):
     game = "Actraiser"
@@ -43,7 +46,7 @@ class ActraiserProcedurePatch(APProcedurePatch, APTokenMixin):
     @classmethod
     def get_source_data(cls) -> bytes:
         return get_base_rom_bytes()
-
+    
     def write_byte(self, offset, value) -> None:
         self.write_token(APTokenTypes.WRITE, offset, value.to_bytes(1, "little"))
 
@@ -56,53 +59,52 @@ class ActraiserProcedurePatch(APProcedurePatch, APTokenMixin):
 
 class LocalRom:
 
-    def __init__(self, file, patch=True, vanillaRom=None, name=None, hash=None):
+    # def __init__(self, file, patch=True, vanillaRom=None, name=None, hash=None):
+    #     self.name = name
+    #     self.hash = hash
+    #     self.orig_buffer = None
+
+    #     with open(file, 'rb') as stream:
+    #         self.buffer = read_snes_rom(stream)
+    def __init__(self, file: bytes, name: Optional[str] = None) -> None:
+        self.file = bytearray(file)
         self.name = name
-        self.hash = hash
-        self.orig_buffer = None
-
-        with open(file, 'rb') as stream:
-            self.buffer = read_snes_rom(stream)
         
-    def read_bit(self, address: int, bit_number: int) -> bool:
-        bitflag = (1 << bit_number)
-        return ((self.buffer[address] & bitflag) != 0)
+    def read_byte(self, offset: int) -> int:
+        return self.file[offset]
 
-    def read_byte(self, address: int) -> int:
-        return self.buffer[address]
+    def read_bytes(self, offset: int, length: int) -> bytes:
+        return self.file[offset:offset + length]
 
-    def read_bytes(self, startaddress: int, length: int) -> bytearray:
-        return self.buffer[startaddress:startaddress + length]
+    def write_byte(self, offset: int, value: int) -> None:
+        self.file[offset] = value
 
-    def write_byte(self, address: int, value: int):
-        self.buffer[address] = value
+    def write_bytes(self, offset: int, values) -> None:
+        self.file[offset:offset + len(values)] = values
 
-    def write_bytes(self, startaddress: int, values):
-        self.buffer[startaddress:startaddress + len(values)] = values
-
-    def write_to_file(self, file):
-        with open(file, 'wb') as outfile:
-            outfile.write(self.buffer)
-
-    def read_from_file(self, file):
-        with open(file, 'rb') as stream:
-            self.buffer = bytearray(stream.read())
+    def get_bytes(self) -> bytes:
+        return bytes(self.file)
 
 
 
 def patch_rom(world: World, rom: ActraiserProcedurePatch):
+    def import_binary_bytes(file_name: str):
+        with open(file_name, "rb") as f:
+                data = f.read()
+        return bytearray(data)
+    
     def randomize_music():
         from .rom_data import music_offsets, music_pointers
         #rom.write_bytes
         for offset in music_offsets:
-            randtrack = random.choice(music_pointers)
+            randtrack = world.random.choice(music_pointers)
             rom.write_bytes(offset, randtrack)
 
     def randomize_lairs():
         
         from .rom_data import custom_lair_images, lair_images,monsters
         # Write custom lair image 
-        picked_lair_img = random.choice(list(custom_lair_images.keys()))
+        picked_lair_img = world.random.choice(list(custom_lair_images.keys()))
         rom.write_bytes(0x639C0, bytearray(custom_lair_images[picked_lair_img][0]))
         rom.write_bytes(0x63BC0, bytearray(custom_lair_images[picked_lair_img][1]))
         
@@ -110,40 +112,51 @@ def patch_rom(world: World, rom: ActraiserProcedurePatch):
 
         for x in range(24):
             lairoff = 0x1B825 + (x * 9)
-            montype = random.choices(monsters, [0.4,0.25,0.2,0.15])[0]
-            rom.write_byte(lairoff + 2, random.choice(lair_images)) # Lair Image
+            montype = world.random.choices(monsters, [0.4,0.25,0.2,0.15])[0]
+            rom.write_byte(lairoff + 2, world.random.choice(lair_images)) # Lair Image
             rom.write_byte(lairoff + 3, montype) # Monster Type
-            rom.write_byte(lairoff + 4, random.randint(0x1E, 0xC8)) # Action Delay
+            rom.write_byte(lairoff + 4, world.random.randint(0x1E, 0xC8)) # Action Delay
             if montype == 0x15:
-                rom.write_byte(lairoff + 5, random.randint(0x64, 0x8D)) #Respawn Delay
+                rom.write_byte(lairoff + 5, world.random.randint(0x64, 0x8D)) #Respawn Delay
             else:
                 rom.write_byte(lairoff + 5, 0x01)
 
     def randomize_objects():
-        
+        #local_rom = LocalRom(rom)
         # valid_objects[obj_tbl_offsets.index(table_base)]
         from .rom_data import obj_tbl_offsets
-        for table_base in obj_tbl_offsets:
-            entry = 0
-            i = 0
-            while rom.read_byte(table_base+ entry) != 00 and  rom.read_byte(table_base+ entry) != 0xFE and rom.read_byte(table_base+ entry) != 0xFF:
-                obj_id = rom.read_byte(table_base+ entry + 3)
-                if obj_id in obj_tbl_offsets[table_base][0] and world.options.random_object:
-                    rom.write_byte(table_base+ entry + 3, random.choices(obj_tbl_offsets[table_base][0],obj_tbl_offsets[table_base][1])[0])
+        for table_base, data in obj_tbl_offsets.items():
+            offset = 0
+            obj_idx = 0
+            valid_objs = data[0]
+            enabled_objs = data[1]
+            obj_list = data[2]
+            for obj_id in obj_list:
+                if obj_id in valid_objs and world.options.random_object:
+                    rom.write_byte(table_base+ offset + 3, world.random.choices(valid_objs,enabled_objs)[0])
                 elif obj_id == 0x80 and world.options.random_orb:
-                    rom.write_byte(table_base+ entry + 2, random.randint(0x00, 0x07))
-                entry = entry + 4
-                i = i + 1
+                    rom.write_byte(table_base+ offset + 2, world.random.randint(0x00, 0x07))
+                offset += 4
+                obj_idx += 1
+            
+            # while local_rom.read_byte(table_base+ entry) != 00 and  local_rom.read_byte(table_base+ entry) != 0xFE and local_rom.read_byte(table_base+ entry) != 0xFF:
+            #     obj_id = local_rom.read_byte(table_base+ entry + 3)
+            #     if obj_id in obj_tbl_offsets[table_base][0] and world.options.random_object:
+            #         rom.write_byte(table_base+ entry + 3, random.choices(obj_tbl_offsets[table_base][0],obj_tbl_offsets[table_base][1])[0])
+            #     elif obj_id == 0x80 and world.options.random_orb:
+            #         rom.write_byte(table_base+ entry + 2, random.randint(0x00, 0x07))
+            #     entry = entry + 4
+            #     i = i + 1
         
     def randomize_palettes():
         from .palette_data import colorsets, pal_sources, single_color
 
         for object in pal_sources:
-            rand_colorset = random.choice(list(colorsets[pal_sources[object][0]].keys()))
+            rand_colorset = world.random.choice(list(colorsets[pal_sources[object][0]].keys()))
             i = 0
             for clrinx in pal_sources[object][1]:
                 if clrinx == 18:
-                    color = random.choice(single_color)
+                    color = world.random.choice(single_color)
                     rom.write_bytes(object+i,bytearray(color))
                 elif clrinx == 16:
                     i = i+2
@@ -154,6 +167,16 @@ def patch_rom(world: World, rom: ActraiserProcedurePatch):
                     color = colorsets[pal_sources[object][0]][rand_colorset][clrinx]
                     rom.write_bytes(object+i,bytearray(color))
                 i=i+2
+            
+    def text2bytes(text):
+        from .rom_data import txt_table
+        raw_bytes = []
+        for char in text:
+            if char in txt_table:
+                raw_bytes.append(txt_table[char])
+            else:
+                raw_bytes.append(0x20) # space
+        return bytearray(raw_bytes)
                     
     
     # Randomized Options
@@ -214,8 +237,8 @@ def patch_rom(world: World, rom: ActraiserProcedurePatch):
     #Individual Item Routines
     rom.write_bytes(0xF8100, ITEM_ROUTINES)
 
-    #Recieve Magic
-    rom.write_bytes(0xF8230, GET_MAGIC)
+    #Recieve Magic Spell
+    rom.write_bytes(0xF8230, GET_MAGIC_SPELL)
 
     #Recieve Offering
     rom.write_bytes(0xF8260, GET_OFFERING)
@@ -239,8 +262,8 @@ def patch_rom(world: World, rom: ActraiserProcedurePatch):
 
     #Recieve 1UP
     rom.write_bytes(0xF8223,GET_1UP)
-    #Recieve Magic
-    rom.write_bytes(0xF8218,GET_MAGIC) # INC $2C -> RTS
+    #Recieve MP
+    rom.write_bytes(0xF8218,GET_MP) # INC $2C -> RTS
 
     #Recieve 1000 points
     rom.write_bytes(0xF81D4, GET_POINTS)
@@ -428,6 +451,8 @@ def patch_rom(world: World, rom: ActraiserProcedurePatch):
         
 
     #Graphics
+    # Catraiser
+    
     #AP Ofering Icons
     rom.write_bytes(0xF0AC, bytearray([0xA0, 0xFF])) # Use Bag Icon Pointer
     rom.write_bytes(0xFFA0, bytearray([0x45, 0x05])) # Use Bag Icon For Item 10
@@ -499,6 +524,40 @@ def patch_rom(world: World, rom: ActraiserProcedurePatch):
     #    rom.write_bytes(0x181E0, bytearray([0xC9, 0x30, 0x00])) #change Construction Wait Timer
     #else:
     rom.write_byte(DEBUG_ADR, 0x00)
+
+
+    if world.options.catraiser:
+        
+        import os
+        #logger.warning("Meow")
+        cat_bytes = get_data(__name__, "catraiser.bin")
+        #logger.warning(f"{cat_bytes}")
+        rom.write_bytes(0x68000, cat_bytes)
+        rom.write_bytes(0x2E27F, BIGCATRAISER)
+        rom.write_bytes(0x6B840, FISH_TOP)
+        rom.write_bytes(0x6BA40, FISH_BOT)
+        catraiser_text_dict = {
+            "FILLMEOW":     [0x2851,0xF1CB,0x2000E,0x2177E,0x217FA,0x21D19,0x222EC,0x24D93,0x24E2F,0x25A7F],
+            "BLOODPURR":    [0x285E,0xF1D4,0xF60A,0x20017,0x207D8,0x207F8,0x22068,0x22167,0x22351,0x24F70,0x25D1F],
+            "MEWSNDORA":    [0x2870,0xF1DE,0xF621,0x20021,0x22BFA,0x23135,0x249C9,0x250F9,0x25C8F],
+            "CATOS":        [0x2882,0xF1E8,0x2002B,0x232D3,0x233CB,0x236E8,0x23811,0x2529D,0x25B93],
+            "NYANHNA":      [0x2890,0xF1EE,0x20031,0x23B0F,0x23B3B,0x23E35,0x23FDB,0x25AD3],
+            "NORTHPAWS":    [0x28A0,0xF1F6,0xF659,0x20039,0x24174,0x241C6,0x24210,0x24307,0x24514,0x25514,0x25D43],
+            "PAWS!":        [0x28EF],
+            "Tabby":        [0x209C3,0x20A05,0x22012,0x2208D,0x223A6,0x22431,0x22469,0x2256E,0x227AA,0x229AD,0x2484E,0x24FD4,0x250D8],
+            "mew":          [0xF80D,0xF82A,0xFE15,0x20255,0x20FE0,0x210C6,0x21C1E,0x22452,0x225FB,0x22B22,0x22FD0,0x23E64,0x24318,0x245A0,0x245DC,0x24743,0x24784,0x25020,0x250AA,0x2576B,0x258F3,0x25953,0x25977],
+            "fur":          [0xF907,0xFC57,0xFC83,0x200D2,0x206CA,0x21094,0x216A2,0x2172F,0x219FB,0x21A66,0x21C19,0x21FE6,0x22D47,0x23468,0x235B3,0x2401C,0x24648,0x249F1,0x24A61,0x24B21,0x24BBF,0x24EA4,0x25321,0x25360,0x257D6,0x25836,0x258A0,0x25B33],
+            "pawer":        [0x20ED1,0x20FA4,0x20FB9,0x21387,0x21978,0x21B3C,0x22B8B,0x22DA3,0x23028,0x23845,0x23909,0x247FE,0x2481B,0x24A14,0x2517B,0x25E4B,],
+            "fresh fishy":  [0x2241E, 0x22486, 0x24835],
+            "fishy":        [0x20A1F, 0x22442,]
+        }
+        for text, addresses in catraiser_text_dict.items():
+            text_bytes = text2bytes(text)
+            for address in addresses:
+                rom.write_bytes(address, text_bytes)
+
+
+
 
     #set population goal
     if world.options.population_goal:

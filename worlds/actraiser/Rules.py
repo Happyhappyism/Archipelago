@@ -9,6 +9,9 @@ def has_key_miracles(state, player):
 def has_all_key_items(state, player):
     return state.has("Loaf of Bread", player) and state.has("Wheat", player) and state.has("Herb", player) and state.has("Bridge", player) and state.has("Music", player) and state.has("Magic Skull", player) and state.has("Fleece", player)
 
+def can_use_quake(state, player):
+    return state.has("Earthquake", player) and state.has("Level Up", player, 7)
+
 def can_reach_region_count(state, player, regcount):
     return (sum(
         (state.can_reach_region("Fillmore Forest", player),
@@ -60,7 +63,7 @@ def get_region_rules(player, act_levels):
         "Marahna Swamp -> Marahna":
             lambda state: state.has("Lightning", player),
         "Marahna -> Marahna Temple":
-            lambda state: state.has("Earthquake", player) and state.has("Sun", player),
+            lambda state: can_use_quake(state, player) and state.has("Sun", player),
 
         "Sky -> Northwall Cave":
             lambda state: state.has("Level Up", player, act_levels[5]),
@@ -165,7 +168,7 @@ def get_location_rules(player, crystal_needed):
         "KD - Max Population":
             lambda state: state.has("Herb", player) and state.has("Kasandora Advancement", player, 2) and state.has("Wheat", player),
         "KD - Source of Life":
-            lambda state: state.has("Earthquake", player) and state.has("Level Up",player, 7),
+            lambda state: can_use_quake(state, player),
         "KD - Ancient Tablet":
             lambda state: state.has("Herb", player) and state.has("Kasandora Advancement", player, 2),
         "KD - Cured Plague":
@@ -185,21 +188,21 @@ def get_location_rules(player, crystal_needed):
         #"MH - Act 2 Clear":
         #    lambda state: state.has("Ancient Tablet", player), 
         "MH - Herb":
-            lambda state: state.has("Earthquake", player) and state.has("Sun", player),
+            lambda state: can_use_quake(state, player) and state.has("Sun", player),
         "MH - Bomb":
             lambda state: state.has("Sun", player),
         "MH - Source of Magic":
             lambda state: state.has("Compass", player),
         "MH - Advancement 1":
-            lambda state: state.has("Earthquake", player) or  state.has("Sun", player),
+            lambda state: can_use_quake(state, player) or  state.has("Sun", player),
         "MH - Advancement 2":
-            lambda state: state.has("Earthquake", player) and  state.has("Sun", player),
+            lambda state: can_use_quake(state, player) and  state.has("Sun", player),
         "MH - Magical Aura":
-            lambda state: state.has("Ancient Tablet", player) and state.has("Earthquake", player) and state.has("Sun", player),
+            lambda state: state.has("Ancient Tablet", player) and can_use_quake(state, player) and state.has("Sun", player),
         "MH - Population 256":
-            lambda state: state.has("Sun", player) and (state.has("Earthquake", player) or state.has ("Marahna Advancement", player)), 
+            lambda state: state.has("Sun", player) and (can_use_quake(state, player) or state.has ("Marahna Advancement", player)), 
         "MH - Max Population":
-            lambda state: state.has("Marahna Advancement", player, 2) and state.has("Sun", player) and state.has("Earthquake", player) and state.has("Wheat", player),
+            lambda state: state.has("Marahna Advancement", player, 2) and state.has("Sun", player) and can_use_quake(state, player) and state.has("Wheat", player),
 
         #"NW - Bomb":
         #    lambda state: state.has("Fleece", player),

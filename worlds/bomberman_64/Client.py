@@ -202,7 +202,7 @@ class Bomb64Client(BizHawkClient):
         self.enemy_model = rom_data[1][4]
         self.enemy_ai = rom_data[1][5]
 
-        for x in range(0x9, 0xE):
+        for x in range(0x9, 0xF):
             self.parts_list[x-9] = rom_data[1][x]
 
         if deathlink:

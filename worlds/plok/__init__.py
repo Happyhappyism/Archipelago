@@ -157,7 +157,7 @@ class PlokWorld(World):
         #if self.options.include_traps:
         #    filler_items.extend(["Stun Trap","Panic Bomb Trap","Fire Trap","Reverse Trap"])
         #    filler_weights.extend([0.3,0.4,0.3,0.4])
-        junk_item = random.choices(filler_items,filler_weights)[0]
+        junk_item = self.random.choices(filler_items,filler_weights)[0]
         return junk_item
 
     def modify_multidata(self, multidata: dict):

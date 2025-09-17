@@ -80,14 +80,13 @@ class ActraiserSNIClient(SNIClient):
         from SNIClient import snes_buffered_write, snes_flush_writes, snes_read
 
         rom_name = await snes_read(ctx, ACTR_ROMHASH_START, ROMHASH_SIZE)
-        char_name = await snes_read(ctx, ACTR_FILE_NAME_ADDR, 0x1)
+        
         #snes_logger.info(f"{rom_name}")
         if rom_name is None or rom_name == bytes([0] * ROMHASH_SIZE) or rom_name[:2] != b"AR":
             return False
 
         #Make sure a file is made
-        if char_name[0] == 0x20: 
-            return False
+        
         
         ctx.game = self.game
         ctx.items_handling = 0b111  # remote items
@@ -117,7 +116,10 @@ class ActraiserSNIClient(SNIClient):
         arwram = await snes_read(ctx, ARWADR, 0x1)
         if ctx.server is None or ctx.slot is None:
             return
+        char_name = await snes_read(ctx, ACTR_FILE_NAME_ADDR, 0x1)
         
+        if char_name[0] == 0x20: 
+            return
 
         if "DeathLink" in ctx.tags and death_status and ctx.last_death_link + 1 < time.time():
 

@@ -19,6 +19,9 @@ import os
 import pkgutil
 import Patch
 import settings
+import logging
+
+logger = logging.getLogger("Bomberman 64")
 
 # Testing
 
@@ -178,7 +181,7 @@ class Bomb64World(World):
     def get_filler_item_name(self) -> str:
         filler_items = ["Extra Life","5 Gems","Heart","Fast Virus","Sticky Virus","Slow Virus","Bombless Virus","Restless Virus","Death Virus"]
         filler_weights = [0.5, 0.7,0.8, 0.5,0.001,0.4,0.3,0.02,0.05]
-        junk_item = random.choices(filler_items,filler_weights)[0]
+        junk_item = self.random.choices(filler_items,filler_weights)[0]
         return junk_item
 
     def set_rules(self) -> None:
@@ -254,5 +257,6 @@ class Bomb64World(World):
         patch.procedure = procedure
         write_tokens(self, patch)
         out_file_name = self.multiworld.get_out_file_name_base(self.player)
+        # logger.warning(f"Writing to {os.path.join(output_directory, f'{out_file_name}{patch.patch_file_ending}')}")
         patch.write(os.path.join(output_directory, f"{out_file_name}{patch.patch_file_ending}"))
         

@@ -549,15 +549,15 @@ def patch_rom(world: World, rom: LocalRom):
             palmode = vals[0]
             match clrcount:
                 case 3:
-                    writeary = random.choice(list(threecolor.values()))
+                    writeary = world.random.choice(list(threecolor.values()))
                 case 4:
-                    writeary = random.choice(list(fourcolor.values()))
+                    writeary = world.random.choice(list(fourcolor.values()))
                 case 5:
-                    writeary = random.choice(list(fivecolor.values()))
+                    writeary = world.random.choice(list(fivecolor.values()))
                 case 6:
-                    writeary = random.choice(list(sixcolor.values()))
+                    writeary = world.random.choice(list(sixcolor.values()))
                 case 7:
-                    writeary = random.choice(list(sevencolor.values()))
+                    writeary = world.random.choice(list(sevencolor.values()))
             match palmode:
                 case 1: # Insert a 0x00 byte at positon 6
                     writeary.insert(6, 0x00)
@@ -578,12 +578,12 @@ def patch_rom(world: World, rom: LocalRom):
 
     if world.options.random_music:
         for offset in range(41):
-            music = (random.randint(0x2,0x14) * 2)
+            music = (world.random.randint(0x2,0x14) * 2)
             rom.write_byte(MUSIC_TABLE + (offset *2), music)
 
     if world.options.random_limbsfx:
-        rom.write_byte(0x3868, random.randint(0x1,0x4B)) #Shoot
-        rom.write_byte(0x3BBC, random.randint(0x1,0x4B)) #Return
+        rom.write_byte(0x3868, world.random.randint(0x1,0x4B)) #Shoot
+        rom.write_byte(0x3BBC, world.random.randint(0x1,0x4B)) #Return
 
     from Utils import __version__
     rom.name = bytearray(f'PK{__version__.replace(".", "")[0:3]}_{world.player}_{world.multiworld.seed:11}\0', 'utf8')[:21]

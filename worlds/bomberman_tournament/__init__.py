@@ -75,7 +75,7 @@ class BomberTWorld(World):
         if self.options.random_fuse.value:
             from .Items import kara_hints
             karalist = kara_hints
-            random.shuffle(karalist)
+            self.random.shuffle(karalist)
             fuse_items = ["Beta - Fuse Fangs", "Beta - Fuse Sea", "Beta - Fuse Dragon", "Beta - Fuse SeaWing"]
             for x in range(4):
                 kara1 = karalist.pop()
@@ -159,7 +159,7 @@ class BomberTWorld(World):
             locked_item = self.create_item(location_data_table[location_name].locked_item)
             self.get_location(location_name).place_locked_item(locked_item)
         powerup_names = ["Health", "BombUp","FireUp"]
-        self.get_location("Colosseum Streak").place_locked_item(self.create_item(random.choice(powerup_names)))
+        self.get_location("Colosseum Streak").place_locked_item(self.create_item(self.random.choice(powerup_names)))
         if self.options.pool_medals == False:
             self.get_location("Magnet - Magnet Bomber Defeated").place_locked_item(self.create_item("Medal of Bravery"))
             self.get_location("Pretty - Pretty Bomber Defeated").place_locked_item(self.create_item("Medal of Justice"))
@@ -181,7 +181,7 @@ class BomberTWorld(World):
     def get_filler_item_name(self) -> str:
         filler_items = ["Small Medicine","Large Medicine","50 Gold","100 Gold"]
         filler_weights = [0.9, 0.2, 0.7,0.4]
-        junk_item = random.choices(filler_items,filler_weights)[0]
+        junk_item = self.random.choices(filler_items,filler_weights)[0]
         return junk_item
 
     #def modify_multidata(self, multidata: dict):

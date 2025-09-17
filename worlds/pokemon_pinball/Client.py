@@ -37,6 +37,8 @@ class PokePinballClient(BizHawkClient):
     notes_used = 0
     dex_need = 151
     score_need = 1000000000
+
+
     #needed_mons = b''
 
     def __init__(self) -> None:
@@ -75,8 +77,8 @@ class PokePinballClient(BizHawkClient):
         
         gameoptions = rom_data[1]
         deathlink = gameoptions[2]
-        needed_mon_raw = rom_data[4]
-        self.needed_mons = needed_mon_raw
+        self.needed_mons = rom_data[4]
+        # = needed_mon_raw
         if deathlink:
             self.death_link = True
         #self.notes_used = 0
@@ -112,12 +114,14 @@ class PokePinballClient(BizHawkClient):
 
     async def game_watcher(self, ctx: "BizHawkClientContext") -> None:
         from CommonClient import logger
-        def send_banner_msg(text:str,writes:list):
-                while len(text) < 0x20:
-                    text += " "
-                writes.append((0x500, text.encode("ascii") , "WRAM"))
-                
-                writes.append((0x15CA, bytearray([0x01,0x01,0x01,0x05,0x05,0x54,0x40,0x14]) , "WRAM"))
+        def send_banner_msg(text:str,writes:list, item_timer:int):
+                if item_timer == 0:
+                    while len(text) < 0x20:
+                        text += " "
+                    writes.append((0x500, text.encode("ascii") , "WRAM"))
+                    
+                    writes.append((0x15CA, bytearray([0x01,0x01,0x01,0x02,0x05,0x54,0x10,0x14]) , "WRAM"))
+                    writes.append((0x1AF4, (0xFF).to_bytes(1, "little") , "WRAM"))
                 return writes
         
         if ctx.slot is None:
@@ -143,10 +147,11 @@ class PokePinballClient(BizHawkClient):
             #self.dex_state = pokedex_data
             game_screen = ram_data[2][0]
             recv_index = ram_data[3][0]
-            mon_owned = ram_data[6][0]
+            mon_owned = 0
             death_state = game_data[0xC9]
             game_over = ram_data[0x4][0]
             ap_ram = ram_data[5]
+            item_timer = ap_ram[0x4]
             bonus_clear = game_data[0x9A]
             stage_cur = game_data[0xAC]
             #meowth_score = ram_data[7][0]
@@ -182,7 +187,7 @@ class PokePinballClient(BizHawkClient):
             mon_idx = 0
             for val in pokedex_data:
                 mon_idx += 1
-                if val >= 3:
+                if val & 2:
                     loc_id = 0x1C2000 + mon_idx
                     if loc_id not in self.local_checked_locations:
                         locs_to_send.add(loc_id)
@@ -318,6 +323,7 @@ class PokePinballClient(BizHawkClient):
                         outbound_writes.append((RECV_PORT, bytearray([0x02]), "WRAM"))
                     case 0x1C2034:  # Catchem Mode
                         outbound_writes.append((RECV_PORT, bytearray([0x01]), "WRAM"))
+                        
                     case 0x1C2035:  # Evolution Mode
                         outbound_writes.append((0x1543, bytearray([0x03]), "WRAM"))
                         outbound_writes.append((RECV_PORT, bytearray([0x02]), "WRAM"))
@@ -339,8 +345,10 @@ class PokePinballClient(BizHawkClient):
                         outbound_writes.append((RECV_PORT, bytearray([0x08]), "WRAM"))
                 if raw_item in item_recv_text:
                     #logger.warning(f"Billboard Msg: {item_recv_text[raw_item]}")
-                    send_banner_msg(item_recv_text[raw_item].upper(), outbound_writes)
+                    #send_banner_msg(item_recv_text[raw_item].upper(), outbound_writes, item_timer)
+                    pass
                 outbound_writes.append((RECV_IDX, (recv_index +1).to_bytes(1, "little") , "WRAM"))
+                
 
             # Handle notes command
             if self.research_command:
@@ -356,34 +364,48 @@ class PokePinballClient(BizHawkClient):
             #score_clear = False
 
             counted_mons = 0
+            mon_owned = 0
 
             for offset in range(DEX_SIZE):
-                if (pokedex_data[offset] | self.needed_mons[offset]) == 3:
+                if (pokedex_data[offset] | self.needed_mons[offset]) & 0x02 == 0x2:
                     counted_mons += 1
                 else:
                     #counted_mons = 0
                     break
+            for offset in range(DEX_SIZE):
+                if (pokedex_data[offset] & 0x2):
+                    mon_owned += 1
+
             #logger.warning(f"Counted Mons: {counted_mons}, Needed Mons: {self.dex_need}, Mons_Owned: {mon_owned}")
             if counted_mons >= DEX_SIZE and self.all_needed_mons == False:
                 self.all_needed_mons = True
-                send_banner_msg("POKEDEX COMPLETE!", outbound_writes)
+                logger.warning(f"RESEARCH COMPLETE!")
+                send_banner_msg("RESEARCH COMPLETE!", outbound_writes, item_timer)
+                
             if (cur_score >= self.score_need) and (self.score_goal == False):
                 self.score_goal = True
-                send_banner_msg("GOAL SCORE COMPLETE!", outbound_writes)
+                if self.score_need:
+                    logger.warning(f"GOAL SCORE COMPLETE!")
+                    send_banner_msg("GOAL SCORE COMPLETE!", outbound_writes, item_timer)
+
             if (mon_owned >= self.dex_need) and self.dex_complete == False:
                 self.dex_complete = True
-                send_banner_msg("RESEARCH COMPLETE!", outbound_writes)
-            if self.dex_complete and self.all_needed_mons and self.score_goal and not ctx.finished_game:
-                goalclear = True
-                send_banner_msg("CONGRADULATIONS YOU WIN!", outbound_writes)
-            if not ctx.finished_game:
-                if goalclear:
-                    
-                    await ctx.send_msgs([{
-                        "cmd": "StatusUpdate",
-                        "status": ClientStatus.CLIENT_GOAL
-                    }])
+                if self.dex_need:
+                    logger.warning(f"POKEDEX COMPLETE!")
+                    send_banner_msg("POKEDEX COMPLETE!", outbound_writes, item_timer)
 
+
+            if (self.dex_complete) and (self.all_needed_mons) and (self.score_goal):
+                goalclear = True
+                
+
+            if not ctx.finished_game and goalclear:
+                send_banner_msg("CONGRADULATIONS YOU WIN!", outbound_writes, item_timer)
+                await ctx.send_msgs([{
+                    "cmd": "StatusUpdate",
+                    "status": ClientStatus.CLIENT_GOAL
+                }])
+                ctx.finished_game = True
             await bizhawk.write(ctx.bizhawk_ctx, outbound_writes)
 
         except bizhawk.RequestFailedError:

@@ -5,7 +5,7 @@ import dataclasses
 import os
 import typing
 import math
-import random
+#import random
 import threading
 
 from .Client import ActraiserSNIClient
@@ -208,7 +208,7 @@ class ActraiserWorld(World):
         if self.options.include_traps:
             filler_items.extend(["Skull Trap","Redirect Trap"])
             filler_weights.extend([0.3, 0.4])
-        junk_item = random.choices(filler_items,filler_weights)[0]
+        junk_item = self.random.choices(filler_items,filler_weights)[0]
         return junk_item
 
     def modify_multidata(self, multidata: dict):
@@ -232,7 +232,7 @@ class ActraiserWorld(World):
             upperlevel = self.options.max_level.value - 1
             #town_index = random.shuffle([0,1,2,3,4,5])
             for x in range(1,6):
-                self.act_levels[x] = random.randint(1, upperlevel)
+                self.act_levels[x] = self.random.randint(1, upperlevel)
         
         region_rules = get_region_rules(player, self.act_levels)
         for entrance_name, rule in region_rules.items():

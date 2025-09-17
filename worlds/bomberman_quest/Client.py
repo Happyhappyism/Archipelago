@@ -10,18 +10,21 @@ from worlds._bizhawk.client import BizHawkClient
 import time
 import random
 
+from .Items import item_WRAM_address, item_stackable
+from .Locations import overworld_flags, monster_flags, sythesis_flags
+
 logger = logging.getLogger("Client")
 
 if TYPE_CHECKING:
     from worlds._bizhawk.context import BizHawkClientContext
 
-RECV_IDX = 0x1000
-RECV_PORT = 0x1AF0
+RECV_IDX = 0xEB0
+RECV_PORT = 0xEB1
 
-class Smash64Client(BizHawkClient):
-    game = "Smash 64"
-    system = "N64"
-    patch_suffix = ".apsmash64"
+class BombQuestClient(BizHawkClient):
+    game = "Bomberman Quest"
+    system = "GBC"
+    patch_suffix = ".apbombquest"
     local_checked_locations: Set[int]
     rom_slot_name: Optional[str]
 
@@ -46,16 +49,21 @@ class Smash64Client(BizHawkClient):
         rom_data = await bizhawk.read(
             ctx.bizhawk_ctx,
             [
-            (0x20, 14, "ROM"), # 0 Rom Name
+            (ROM_NAME_ADR, 0x3, "ROM"), # 0 Rom Name
             (OPTION_ADR, 0x10, "ROM"), # 1 Options
             (PLAYER_NAME_ADR, 0x32, "ROM"), # 2 Player Name
             (ROM_NAME_ADR, 0x20, "ROM"), # 3 Slot Data
+            (0x134, 0xB, "ROM"), # 4 Game Title
             ]
         )
         try:
-            rom_name = (rom_data[0]).decode("ascii")
-            if rom_name != "SMASH BROTHERS":
+            rom_name = (rom_data[4]).decode("ascii")
+            ap_string = (rom_data[0]).decode("ascii")
+            if rom_name != "BOMBERQUEST":
                 logger.info(f"Wrong Name {rom_name} for this client")
+                return False
+            elif ap_string != "BQU":
+                logger.info(f"Please use the Archipelago patched rom for this client")
                 return False
             try:
                 slot_name_bytes = rom_data[2]
@@ -74,7 +82,7 @@ class Smash64Client(BizHawkClient):
         if deathlink:
             self.death_link = True
         ctx.game = self.game
-        ctx.items_handling = 0b111
+        ctx.items_handling = 0b101
         self.player_name = rom_data[2].decode("ascii")
         ctx.slot = chr(rom_data[3][7])
         ctx.want_slot_data = True
@@ -91,7 +99,7 @@ class Smash64Client(BizHawkClient):
     async def send_deathlink(self, ctx: "BizHawkClientContext") -> None:
         self.sending_death_link = True
         ctx.last_death_link = time.time()
-        await ctx.send_death("Megaman Died.")
+        await ctx.send_death("Bomberman Died.")
 
     def on_deathlink(self, ctx: "BizHawkClientContext") -> None:
         ctx.last_death_link = time.time()
@@ -110,20 +118,33 @@ class Smash64Client(BizHawkClient):
             ram_data = await bizhawk.read(
                 ctx.bizhawk_ctx,
                 [
-                    (0x1400, 0x100, "RAM"), # 0 Game RAM
-                    (RECV_IDX, 0x1, "WRAM"), # Recv Index
-                    (0x1500, 0x100, "RAM"), # 2 Game Flags
+                    (RECV_IDX, 0x2, "WRAM"), # 0 Recv Index
+                    (0xEA1, 0x6, "WRAM"), # 1 Overworld Item Flags
+                    (0xEB2, 0x38, "WRAM"), # 2 Monster Flags
+                    (0xF24, 0x40, "WRAM"), # 3 Inventory
+                    (0xE93, 0x8, "WRAM"), # 4 Game Start flag
+                    (0xE81, 0x2, "WRAM"), # 5 Health
+                    (0x1000, 0x20,"WRAM" )  # 6 AP Flags
+                    
                 ]
             )
             outbound_writes = []
-            game_data = ram_data[0]
-            recv_index = ram_data[1][0]
-            game_flags = ram_data[2]
+            recv_index = ram_data[0][0]
+            ap_port = ram_data[0][1]
+            #game_flags = ram_data[2]
+            overworld_data = ram_data[1]
+            monster_data = ram_data[2]
+            inventory_data = ram_data[3]
+            ap_data = ram_data[6]
+            game_flags = ram_data[4]
+            health = ram_data[5][1]
+            event_flags = ram_data[4][5]
 
 
-            if game_data[0x10] == 0xF0:
-                # Make sure you are in a pinball game
+            if game_flags[0] != 0x58 or game_flags[1] != 0x4C:
+                # Make sure ram has been initialized
                 return
+            
             self.game_state = True
             if recv_index == 0xFF:
                 outbound_writes.append((RECV_IDX, bytearray([0x00]), "WRAM"))
@@ -134,28 +155,57 @@ class Smash64Client(BizHawkClient):
             if self.pending_death_link:
                 ## Handle deathlink
                 # Code to kill the player
-                #outbound_writes.append((0x14B3, bytearray([0xF8, 0x44, 0x55, 0xA9]), "WRAM"))
+                outbound_writes.append((0x390, bytearray([0x00]), "WRAM"))
+                outbound_writes.append((0xE82, bytearray([0x00]), "WRAM"))
+                outbound_writes.append((0xEB1, bytearray([(ap_port | 0x1)]), "WRAM"))
                 self.pending_death_link = False
                 self.sending_death_link = True
 
             if "DeathLink" in ctx.tags  and ctx.last_death_link + 10 < time.time():
                 # Code to check if you are dead
-                #if game_over == 0x01 and not self.sending_death_link:
-                #    await self.send_deathlink(ctx)
-                #else:
+                if health == 0 and ((ap_port & 0xFE) == 0):
+                    outbound_writes.append((0xEB1, bytearray([(ap_port & 0xFE)]), "WRAM"))
+                    await self.send_deathlink(ctx)
+                else:
                     self.sending_death_link = False
 
             locs_to_send = set()
             # Handle Locations
 
-            for val in game_flags:
-                flag_idx = 0
-                if val != 0x00:
-                    loc_id = 0x40001 + flag_idx
-                    if loc_id not in self.local_checked_locations:
+            for loc_id, raw_offset in monster_flags.items():
+                if loc_id not in self.local_checked_locations:
+                    offset = raw_offset - 0xEB2
+                    flags = monster_data[offset]
+                    if flags & 0x1:
                         locs_to_send.add(loc_id)
-                flag_idx += 1
-                # Score
+
+            for loc_id, data in overworld_flags.items():
+                if loc_id not in self.local_checked_locations:
+                    raw_offset = data[0]
+                    flag_mask = data[1]
+                    offset = raw_offset - 0xEA1
+                    flags = overworld_data[offset]
+                    if flags & flag_mask:
+                        locs_to_send.add(loc_id)
+
+            for loc_id, flag_mask in sythesis_flags.items():
+                if loc_id not in self.local_checked_locations:
+                    flags = overworld_data[2]
+                    if flags & flag_mask:
+                        locs_to_send.add(loc_id)
+
+            if event_flags & 0x01:
+                trade_id = 0x1C3078
+                if trade_id not in self.local_checked_locations:
+                    locs_to_send.add(trade_id)
+            # for val in game_flags:
+            #     flag_idx = 0
+            #     if val != 0x00:
+            #         loc_id = 0x40001 + flag_idx
+            #         if loc_id not in self.local_checked_locations:
+            #             locs_to_send.add(loc_id)
+            #     flag_idx += 1
+            #     # Score
 
             if locs_to_send != self.local_checked_locations:
                 self.local_checked_locations = locs_to_send
@@ -163,32 +213,33 @@ class Smash64Client(BizHawkClient):
                     await ctx.send_msgs([{"cmd": "LocationChecks", "locations": list(locs_to_send)}])
 
             # Handle Items
-                # Permanent Items
-
-            
-            for item in range(len(ctx.items_received)):
-                raw_item = ctx.items_received[item].item
-                match raw_item:
-                    case 0x40001: # Example Item 1
-                        outbound_writes.append((0x1000, bytearray([0x01]), "WRAM"))
-
-
-                # Temp Items
+            # item_WRAM_address
             if (len(ctx.items_received) > recv_index):
                 raw_item = ctx.items_received[recv_index].item
-                #item_name = ctx.items_received[recv_index].player
-                #logger.warning(f"{ctx.items_received[recv_index]}")
-                match raw_item:
-                    case 0x40002:   # Example Item 2
-                        outbound_writes.append((0x1001, bytearray([0x01]), "WRAM"))
-
+                write_offset = item_WRAM_address[raw_item]
+                if raw_item in item_stackable:
+                    starting_count = inventory_data[write_offset- 0xF24] & 0xF
+                    count = starting_count + 1
+                    item_value = count + 0x10
+                    outbound_writes.append((write_offset, bytearray([item_value]) , "WRAM"))
+                else:
+                    outbound_writes.append((write_offset, bytearray([0x10]) , "WRAM"))
                 outbound_writes.append((RECV_IDX, (recv_index +1).to_bytes(1, "little") , "WRAM"))
 
 
             # Handle Goal
             goalclear = False
-            #all_needed_mons = False
-            #score_clear = False
+            if self.game_goal == 0 and (
+                0x1C300D in self.local_checked_locations and \
+                0x1C301D in self.local_checked_locations and \
+                0x1C302D in self.local_checked_locations and \
+                0x1C303D in self.local_checked_locations
+            ):
+                goalclear = True
+            elif self.game_goal == 1 and (monster_data[0x34] & 0x1): # Chaos Bomber
+                goalclear = True
+            elif self.game_goal == 2 and (event_flags & 0x01) == 1: # Card Trade
+                goalclear = True
             if not ctx.finished_game and goalclear == True:
 
                 await ctx.send_msgs([{

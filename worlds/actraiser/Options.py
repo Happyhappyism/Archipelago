@@ -94,6 +94,10 @@ class IncTraps(Toggle):
     """Includes Traps (Only one made so far) Into the Filler item pool"""
     auto_display_name = "Include Traps"
 
+class Catraiser(Toggle):
+    """Meow!"""
+
+
 class RandomMusic(Toggle):
     """Randomized the Music that plays on each map"""
     display_name = "Randomize Music"
@@ -132,6 +136,7 @@ class ActraiserOptions(PerGameCommonOptions):
     fire_sword: FlameSword
     arrow_count: ArrowUpgrades
     include_traps: IncTraps
+    catraiser: Catraiser
     random_music: RandomMusic
     random_color: RandomColor
     random_object: RandomObj

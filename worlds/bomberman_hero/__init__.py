@@ -78,7 +78,7 @@ class BombHWorld(World):
 
     def create_stage_list(self, total) -> None:
         temp_stages = stage_names
-        random.shuffle(temp_stages)
+        self.random.shuffle(temp_stages)
         #self.second_stage = temp_stages[0]
         inc_stages = []
         for x in range(total):
@@ -108,9 +108,9 @@ class BombHWorld(World):
                 item_pool.append(self.create_item("Healthup"))
 
         if self.options.two_stage:
-            stage_pick = random.randint(0x134808,0x134859)
+            stage_pick = self.random.randint(0x134808,0x134859)
             while stage_pick not in stageid_to_name:
-                stage_pick = random.randint(0x134809,0x134859)
+                stage_pick = self.random.randint(0x134809,0x134859)
             if stage_pick in stageid_to_name:
                 self.multiworld.push_precollected(self.create_item(stageid_to_name[stage_pick]))
 
@@ -178,7 +178,7 @@ class BombHWorld(World):
     def get_filler_item_name(self) -> str:
         filler_items = ["Gold Heart","1 UP","Salt Bombs","Power Glove","Disabled HUD"]
         filler_weights = [0.5, 0.3,0.1,0.2,0.3]
-        junk_item = random.choices(filler_items,filler_weights)[0]
+        junk_item = self.random.choices(filler_items,filler_weights)[0]
         return junk_item
 
     def set_rules(self) -> None:

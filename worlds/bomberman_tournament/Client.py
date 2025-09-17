@@ -9,6 +9,8 @@ from worlds._bizhawk.client import BizHawkClient
 import time
 import random
 
+#from .com_ap_methods import randomize_table_with_exclude, split_into_xbit_chunks
+
 logger = logging.getLogger("Client")
 
 if TYPE_CHECKING:
@@ -22,36 +24,36 @@ ARCADE_MAP = {
 }
 
 
-def split_into_xbit_chunks(byte_array,size):
-   #Splits a byte array into chunks of 32 bits (4 bytes).
+# def split_into_xbit_chunks(byte_array,size):
+#    #Splits a byte array into chunks of 32 bits (4 bytes).
 
-    chunks = []
-    for i in range(0, len(byte_array), size):
-        chunk = byte_array[i:i + size]
-        # If the last chunk is less than 4 bytes, pad it with zeros
-        if len(chunk) < size:
-            chunk += b'\x00' * (size - len(chunk)) 
-        chunks.append(chunk)
-    return chunks
+#     chunks = []
+#     for i in range(0, len(byte_array), size):
+#         chunk = byte_array[i:i + size]
+#         # If the last chunk is less than 4 bytes, pad it with zeros
+#         if len(chunk) < size:
+#             chunk += b'\x00' * (size - len(chunk)) 
+#         chunks.append(chunk)
+#     return chunks
 
-def ramdomize_table_with_exclude(tbl,entrysize,excepts):
-    split_table = split_into_xbit_chunks(tbl,entrysize)
-    idxshuffle = []
-    new_table = []
-    for x in range(len(split_table)):
-        idxshuffle.append(x)
-        new_table.append(b'/x00/x00/x00/x00')
-    random.shuffle(idxshuffle)
-    for idx in range(len(split_table)):
-        if idx in excepts:
-            new_table[idx] = split_table[idx]
-            continue
-        randidx = idxshuffle.pop(0)
-        while randidx in excepts:
-            randidx = idxshuffle.pop(0)
-        new_table[idx] = split_table[randidx]
-    result = b''.join(new_table)
-    return result
+# def ramdomize_table_with_exclude(tbl,entrysize,excepts):
+#     split_table = split_into_xbit_chunks(tbl,entrysize)
+#     idxshuffle = []
+#     new_table = []
+#     for x in range(len(split_table)):
+#         idxshuffle.append(x)
+#         new_table.append(b'/x00/x00/x00/x00')
+#     random.shuffle(idxshuffle)
+#     for idx in range(len(split_table)):
+#         if idx in excepts:
+#             new_table[idx] = split_table[idx]
+#             continue
+#         randidx = idxshuffle.pop(0)
+#         while randidx in excepts:
+#             randidx = idxshuffle.pop(0)
+#         new_table[idx] = split_table[randidx]
+#     result = b''.join(new_table)
+#     return result
 
 # Client Code mirrored from Yugioh 2006 apworld
 #item_name_to_id = {name: data for name, data in item_data_table}

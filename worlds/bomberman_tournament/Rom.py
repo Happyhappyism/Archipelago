@@ -8,80 +8,73 @@ from .rom_data import *
 from settings import get_settings
 import Utils
 from worlds.Files import APProcedurePatch, APTokenMixin, APTokenTypes
-
+from .com_ap_methods import randomize_dict_items, split_into_xbit_chunks, ramdomize_table_with_exclude, ramdomize_table_with_exclude_list
 from BaseClasses import Location
 
 from worlds.AutoWorld import World
 
 MD5Hash = "79aef9bbe1378adfbd688cd66e11a7be"
 
-def randomize_dict_items(my_dict):
-    values = list(my_dict.values())
-    random.shuffle(values)
 
-    keys = list(my_dict.keys())
-    for i, key in enumerate(keys):
-        my_dict[key] = values[i]
-    return my_dict
 
-def split_into_xbit_chunks(byte_array,size):
-   #Splits a byte array into chunks of 32 bits (4 bytes).
+# def split_into_xbit_chunks(byte_array,size):
+#    #Splits a byte array into chunks of 32 bits (4 bytes).
 
-    chunks = []
-    for i in range(0, len(byte_array), size):
-        chunk = byte_array[i:i + size]
-        # If the last chunk is less than 4 bytes, pad it with zeros
-        if len(chunk) < size:
-            chunk += b'\x00' * (size - len(chunk)) 
-        chunks.append(chunk)
-    return chunks
+#     chunks = []
+#     for i in range(0, len(byte_array), size):
+#         chunk = byte_array[i:i + size]
+#         # If the last chunk is less than 4 bytes, pad it with zeros
+#         if len(chunk) < size:
+#             chunk += b'\x00' * (size - len(chunk)) 
+#         chunks.append(chunk)
+#     return chunks
 
-def ramdomize_table_with_exclude(tbl,entrysize,excepts):
-    split_table = split_into_xbit_chunks(tbl,entrysize)
-    idxshuffle = []
-    new_table = []
-    for x in range(len(split_table)):
-        idxshuffle.append(x)
-        new_table.append(b'/x00/x00/x00/x00')
-    random.shuffle(idxshuffle)
-    for idx in range(len(split_table)):
-        if idx in excepts:
-            new_table[idx] = split_table[idx]
-            continue
-        randidx = idxshuffle.pop(0)
-        while randidx in excepts:
-            randidx = idxshuffle.pop(0)
-        new_table[idx] = split_table[randidx]
-    result = b''.join(new_table)
-    return result
+# def ramdomize_table_with_exclude(tbl,entrysize,excepts):
+#     split_table = split_into_xbit_chunks(tbl,entrysize)
+#     idxshuffle = []
+#     new_table = []
+#     for x in range(len(split_table)):
+#         idxshuffle.append(x)
+#         new_table.append(b'/x00/x00/x00/x00')
+#     random.shuffle(idxshuffle)
+#     for idx in range(len(split_table)):
+#         if idx in excepts:
+#             new_table[idx] = split_table[idx]
+#             continue
+#         randidx = idxshuffle.pop(0)
+#         while randidx in excepts:
+#             randidx = idxshuffle.pop(0)
+#         new_table[idx] = split_table[randidx]
+#     result = b''.join(new_table)
+#     return result
 
-def ramdomize_table_with_exclude_list(tbl,entrysize,excepts,baseoffset):
-    # Same as the other function but returns a list of offsets and data to write,
-    # Useful when randomizing multiple sets of data to the same table
-    split_table = split_into_xbit_chunks(tbl,entrysize)
-    idxshuffle = []
-    new_table = []
-    out_dict = {}
-    offset = baseoffset
-    for x in range(len(split_table)):
-        idxshuffle.append(x)
-        new_table.append(b'/x00/x00/x00/x00')
-    random.shuffle(idxshuffle)
-    for idx in range(len(split_table)):
+# def ramdomize_table_with_exclude_list(tbl,entrysize,excepts,baseoffset):
+#     # Same as the other function but returns a list of offsets and data to write,
+#     # Useful when randomizing multiple sets of data to the same table
+#     split_table = split_into_xbit_chunks(tbl,entrysize)
+#     idxshuffle = []
+#     new_table = []
+#     out_dict = {}
+#     offset = baseoffset
+#     for x in range(len(split_table)):
+#         idxshuffle.append(x)
+#         new_table.append(b'/x00/x00/x00/x00')
+#     random.shuffle(idxshuffle)
+#     for idx in range(len(split_table)):
         
-        if idx in excepts:
-            new_table[idx] = split_table[idx]
-            continue
-        randidx = idxshuffle.pop(0)
-        while randidx in excepts:
-            randidx = idxshuffle.pop(0)
+#         if idx in excepts:
+#             new_table[idx] = split_table[idx]
+#             continue
+#         randidx = idxshuffle.pop(0)
+#         while randidx in excepts:
+#             randidx = idxshuffle.pop(0)
         
-        new_table[idx] = split_table[randidx]
-        if randidx not in excepts:
-            out_dict.update({offset:new_table[idx]})
-        offset += entrysize
-    #result = b''.join(new_table)
-    return out_dict
+#         new_table[idx] = split_table[randidx]
+#         if randidx not in excepts:
+#             out_dict.update({offset:new_table[idx]})
+#         offset += entrysize
+#     #result = b''.join(new_table)
+#     return out_dict
 
 class BomberTProcedurePatch(APProcedurePatch, APTokenMixin):
     game = "Bomberman Tournament"
@@ -100,37 +93,37 @@ def comicHints(world:World):
     def gethintitem(comic_id):
         match comic_id:
             case 0: # Comic 1
-                random.shuffle(kara_hints)
+                world.random.shuffle(kara_hints)
                 return kara_hints.pop(0)
             case 1:
                 from .Items import bomb_hints
-                random.shuffle(bomb_hints)
+                world.random.shuffle(bomb_hints)
                 return bomb_hints.pop(0)
             case 2:
                 from .Items import item_hints
-                random.shuffle(item_hints)
+                world.random.shuffle(item_hints)
                 return item_hints.pop(0)
             case 3:
                 if world.options.zone_navigation.value != 2:
                     if world.options.zone_navigation.value == 1:
                         from .Items import key_hints
-                        random.shuffle(key_hints)
+                        world.random.shuffle(key_hints)
                         return key_hints.pop(0)
                     else:
                         return "Zone Key"
                 else:
-                    random.shuffle(kara_hints)
+                    world.random.shuffle(kara_hints)
                     return kara_hints.pop(0)
             case 4:
                 if world.options.pool_medals:
                     from .Items import medal_hints
-                    random.shuffle(medal_hints)
+                    world.random.shuffle(medal_hints)
                     return medal_hints.pop(0)
                 else:
-                    random.shuffle(kara_hints)
+                    world.random.shuffle(kara_hints)
                     return kara_hints.pop(0)
             case _:
-                random.shuffle(kara_hints)
+                world.random.shuffle(kara_hints)
                 return kara_hints.pop(0)
             
     def writeComicHint(hintitem, loc_name, player_name, comic_id):
@@ -187,7 +180,7 @@ def write_tokens(world:World, patch:BomberTProcedurePatch, fuse_dict):
         for base_offset, objlist in object_rando_bytes.items():
             if enemy_rando == 2: # Chatoic random
                 enemy_pool = enemy_rando_types
-                random.shuffle(enemy_pool)
+                world.random.shuffle(enemy_pool)
                 region_enemy_pool = []
                 for x in range(7):
                     region_enemy_pool.append(enemy_pool[x])
@@ -197,7 +190,7 @@ def write_tokens(world:World, patch:BomberTProcedurePatch, fuse_dict):
                     if enemy_rando == 1: # Shuffle
                         randenemy = shuffled_enepool[objlist[objnum]]
                     elif enemy_rando == 2:# Chatoic random
-                        randenemy = random.choice(region_enemy_pool)
+                        randenemy = world.random.choice(region_enemy_pool)
                     patch.write_token(APTokenTypes.WRITE, objoffset, bytearray([randenemy]))
     
     # SID Fusion
@@ -274,7 +267,7 @@ def write_tokens(world:World, patch:BomberTProcedurePatch, fuse_dict):
     if world.options.random_npc:
         for x in range(139):
             adr = 0x30046C + (x * 8)
-            patch.write_token(APTokenTypes.WRITE,adr, bytearray([random.randint(0x00, 0x70)]))
+            patch.write_token(APTokenTypes.WRITE,adr, bytearray([world.random.randint(0x00, 0x70)]))
     if world.options.autosave:
         autosavebytes = bytearray([0x00, 0xB5, # PUSH {LR}
             0x00, 0x20, # MOV R0, #00

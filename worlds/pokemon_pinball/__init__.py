@@ -74,7 +74,7 @@ class PokePinballWorld(World):
         if self.options.extra_start_route:
             from .Items import route_list
             routes = route_list
-            random.shuffle(routes)
+            self.random.shuffle(routes)
             self.multiworld.push_precollected(self.create_item(routes[0]))
         if self.options.include_notes:
             note_count = math.ceil(self.options.dex_needed.value/10)
@@ -101,7 +101,7 @@ class PokePinballWorld(World):
 
     
     def get_filler_item_name(self) -> str:
-        junk_item = random.choices(item_filler,item_filler_weight)[0]
+        junk_item = self.random.choices(item_filler,item_filler_weight)[0]
         return junk_item
     
     def set_rules(self) -> None:

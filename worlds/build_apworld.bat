@@ -2,7 +2,7 @@
 setlocal
 
 ::Define apworld name
-set "apworld=actraiser"
+set "apworld=pokemon_pinball"
 :: Define the path to the folder
 set "sourceFolder=C:\Gaming\Arch\HappyhappyGit\Archipelago\worlds\%apworld%"
 set "outputFolder=C:\Gaming\Arch\HappyhappyGit\Archipelago\worlds"

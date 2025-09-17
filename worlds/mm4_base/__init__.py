@@ -93,7 +93,7 @@ class MM4World(World):
 
     
     def get_filler_item_name(self) -> str:
-        junk_item = random.choices(item_filler,item_filler_weight)[0]
+        junk_item = self.random.choices(item_filler,item_filler_weight)[0]
         return junk_item
     
     def set_rules(self) -> None:
