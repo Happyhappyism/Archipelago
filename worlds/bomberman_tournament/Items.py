@@ -17,7 +17,8 @@ class BomberTItemData(NamedTuple):
     address: Optional[int] = None
     mask: Optional[int] = None
     can_create: Callable[["BomberTWorld"], bool] = lambda world: True
-    item_type = Optional[str] = None
+    item_type: Optional[str] = None
+    item_fuse_kara: bool = False
 
 
 item_data_table: Dict[str, BomberTItemData] = {
@@ -352,6 +353,7 @@ item_data_table: Dict[str, BomberTItemData] = {
         address= 0x35299,
         mask=0x10,
         item_type = "Karabon",
+        item_fuse_kara = True,
         num_exist=0
     ),
     "Sharkun": BomberTItemData(
@@ -363,7 +365,7 @@ item_data_table: Dict[str, BomberTItemData] = {
     ),
     "Th Liger": BomberTItemData(
         code=0x1C29A3,
-        type=ItemClassification.useful,
+        type=ItemClassification.progression,
         address= 0x3529A,
         item_type = "Karabon",
         mask=0x8
@@ -395,6 +397,7 @@ item_data_table: Dict[str, BomberTItemData] = {
         address= 0x35299,
         mask=0x20,
         item_type = "Karabon",
+        item_fuse_kara = True,
         num_exist=0
     ),
     "ToughGuy": BomberTItemData(
@@ -413,7 +416,7 @@ item_data_table: Dict[str, BomberTItemData] = {
     ),
     "Pteradon": BomberTItemData(
         code=0x1C29D2,
-        type=ItemClassification.useful,
+        type=ItemClassification.progression,
         address= 0x3529D,
         item_type = "Karabon",
         mask=0x4
@@ -431,6 +434,7 @@ item_data_table: Dict[str, BomberTItemData] = {
         address= 0x35299,
         mask=0x40,
         item_type = "Karabon",
+        item_fuse_kara = True,
         num_exist=0
     ),
     "Youno": BomberTItemData(
@@ -463,7 +467,7 @@ item_data_table: Dict[str, BomberTItemData] = {
     ),
     "Elekong": BomberTItemData(
         code=0x1C2A00,
-        type=ItemClassification.useful,
+        type=ItemClassification.progression,
         address= 0x352A0,
         item_type = "Karabon",
         mask=0x1
@@ -481,6 +485,7 @@ item_data_table: Dict[str, BomberTItemData] = {
         address= 0x35299,
         mask=0x80,
         item_type = "Karabon",
+        item_fuse_kara = True,
         num_exist=0
     ),
     "KameKing": BomberTItemData(
@@ -492,14 +497,14 @@ item_data_table: Dict[str, BomberTItemData] = {
     ),
     "MarinGon": BomberTItemData(
         code=0x1C29B1,
-        type=ItemClassification.useful,
+        type=ItemClassification.progression,
         address= 0x3529B,
         item_type = "Karabon",
         mask=0x2
     ),
     "Firekong": BomberTItemData(
         code=0x1C2973,
-        type=ItemClassification.useful,
+        type=ItemClassification.progression,
         address= 0x35297,
         item_type = "Karabon",
         mask=0x8
@@ -625,11 +630,12 @@ item_data_table: Dict[str, BomberTItemData] = {
         num_exist= 0
     ),
 }
-id_to_string = {data.code: name for name,data in item_data_table.items if data.code is not None}
+id_to_string = {data.code: name for name,data in item_data_table.items() if data.code is not None}
 item_table = {name: data.code for name, data in item_data_table.items() if data.code is not None}
 kara_hints = [name for name,data in item_data_table.items() if data.item_type =="Karabon"]
 medal_hints = [name for name,data in item_data_table.items() if data.item_type =="Medal"]
 bomb_hints = [name for name,data in item_data_table.items() if data.item_type =="Bomb"]
 key_hints = [name for name,data in item_data_table.items() if data.item_type =="Key"]
 item_hints = [name for name,data in item_data_table.items() if (data.item_type =="Inventory" or data.item_type =="Synthesis")]
+fuse_karas = [name for name, data in item_data_table.items() if data.item_type == "Karabon" and data.item_fuse_kara == False]
 #useful_items = {name: data for name, data in item_data_table.items() if data.type == ItemClassification.useful}

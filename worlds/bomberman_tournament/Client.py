@@ -131,23 +131,29 @@ class BomberTClient(BizHawkClient):
                 ctx.bizhawk_ctx,
                 [
                 (0x35194, 0x7,  "EWRAM"),# 0 Stats
-                (0x35278, 0x90, "EWRAM"), # 1 Flags
+                (0x35278, 0xA0, "EWRAM"), # 1 Flags
                 (0x3525C, 0x1, "EWRAM"), # 2 Temp location, uses MarinGon's loss record
                 (0x34980, 0x4, "EWRAM"), # 3 Arcade
+                (0x48, 1, "EWRAM"), # 4 Current Region
                 ]
             )
             outbound_writes = []
             bomber_stats = ram_data[0]
             flag_data = ram_data[1]
+            int_flags = list(flag_data)
             recv_index = ram_data[2][0]
             game_start = flag_data[0x29] & 0x1
             game_win = flag_data[0x19] & 0x4
             arcade_needed_score = ram_data[3][0]
             arcade_current_score = ram_data[3][2]
 
+            game_region = ram_data[4][0]
+
             if game_start == 0:
                 return
 
+            if game_region == 5:
+                return # Disable client during Sharkun or Arcade
             #Deathlink
             if self.death_link:
                 await ctx.update_death_link(self.death_link)
@@ -282,6 +288,7 @@ class BomberTClient(BizHawkClient):
                 if raw_item == 0x1C2958 or raw_item == 0x1C29A8:
                     pass
                 else:
+                    int_flags[item_index] = newval
                     outbound_writes.append((item_adr, newval.to_bytes(1, "little"), "EWRAM"))
 
                 outbound_writes.append((0x3525C, (recv_index +1).to_bytes(1, "little") , "EWRAM"))
@@ -290,7 +297,7 @@ class BomberTClient(BizHawkClient):
                     while len(itemtext) < 22:
                         itemtext = itemtext + " "
                     outstr = b'\xE0\x12\x0CReceived\xfa' + itemtext.encode('ascii') + b'\xfd'
-                    linkflag = flag_data[0x27] | 0x80
+                    linkflag = int_flags[0x27] | 0x80
                     
                     outbound_writes.append((0x215AE0, outstr, "ROM"))
                     outbound_writes.append((0x3529F, bytearray([linkflag]) , "EWRAM"))

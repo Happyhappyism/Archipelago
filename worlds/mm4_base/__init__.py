@@ -20,6 +20,9 @@ import pkgutil
 import Patch
 import settings
 import math
+import logging
+
+logger = logging.getLogger("Mega Man 4")
 
 class MM4Settings(settings.Group):
     class RomFile(settings.UserFilePath):

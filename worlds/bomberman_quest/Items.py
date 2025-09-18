@@ -393,7 +393,7 @@ item_data_table: Dict[str, BombQuestItemData] = {
         item_index = 0x8,
         WRAM_address= 0xF59,
         stackable= True,
-        num_exist=9
+        num_exist=16
     ),
 
     "Armored Jacket": BombQuestItemData(
@@ -402,6 +402,7 @@ item_data_table: Dict[str, BombQuestItemData] = {
         item_type = 0x2,
         item_index = 0x9,
         fillweight= 0.2,
+        num_exist= 2,
         WRAM_address= 0xF5A
     ),
     "Stopwatch": BombQuestItemData(
@@ -410,6 +411,7 @@ item_data_table: Dict[str, BombQuestItemData] = {
         item_type = 0x2,
         item_index = 0xA,
         fillweight= 0.3,
+        num_exist= 2,
         WRAM_address= 0xF5B
     ),
     # "Flute": BombQuestItemData(
@@ -424,7 +426,7 @@ item_data_table: Dict[str, BombQuestItemData] = {
         type=ItemClassification.filler,
         item_type = 0x2,
         item_index = 0xC,
-        fillweight= 0.8,
+        fillweight= 0.2,
         WRAM_address= 0xF5D
     ),
     "Full Heart": BombQuestItemData(

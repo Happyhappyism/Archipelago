@@ -40,14 +40,17 @@ class NeededMonsters(Range):
     """Number of monsters needed to defeat to access the final stage"""
     display_name = "Monsters Needed"
     range_start = 0
-    range_end = 44
-    default = 44
+    range_end = 48
+    default = 48
 
 class RandomSound(Toggle):
     """Shuffle sound effects"""
 
 class RandomMusic(Toggle):
     """Shuffle Music"""
+
+class RandomPalette(Toggle):
+    """Randomize some colors"""
 
 @dataclass
 class BombQuestOptions(PerGameCommonOptions):
@@ -60,5 +63,6 @@ class BombQuestOptions(PerGameCommonOptions):
     save_heal: HealingSave
     sound_shuffle:RandomSound
     music_shuffle: RandomMusic
+    palette_random: RandomPalette
     #needed_monsters: NeededMonsters
     #needed_engines: NeededEngines

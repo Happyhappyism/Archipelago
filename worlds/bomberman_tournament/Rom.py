@@ -203,6 +203,7 @@ def write_tokens(world:World, patch:BomberTProcedurePatch, fuse_dict):
         karaval2 = kara_list.index(fuse_dict[fuse_items[x]][1])
         fuse_token = bytearray([karaval1, karaval2]) #fuse_results[x],0x00, x+ 0x2C, 0x01])
         patch.write_token(APTokenTypes.WRITE, baseoffset + (x << 3), fuse_token)
+        # Write material text
         materialtextoffset = 0x3C2A00 + (x * 0x20)
         patch.write_token(APTokenTypes.WRITE, materialtextoffset, kara_list[karaval1].encode('ascii') + b'\xFF')
         patch.write_token(APTokenTypes.WRITE, materialtextoffset + 0x10, kara_list[karaval2].encode('ascii')+ b'\xFF')

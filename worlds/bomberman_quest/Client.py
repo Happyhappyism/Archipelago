@@ -236,7 +236,7 @@ class BombQuestClient(BizHawkClient):
                 0x1C303D in self.local_checked_locations
             ):
                 goalclear = True
-            elif self.game_goal == 1 and (monster_data[0x34] & 0x1): # Chaos Bomber
+            elif self.game_goal == 1 and (monster_data[0x34] & 0x40): # Chaos Bomber
                 goalclear = True
             elif self.game_goal == 2 and (event_flags & 0x01) == 1: # Card Trade
                 goalclear = True

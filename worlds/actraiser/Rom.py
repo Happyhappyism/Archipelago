@@ -8,6 +8,7 @@ from worlds.Files import APDeltaPatch, APProcedurePatch, APTokenMixin, APTokenTy
 #from .Locations import lookup_id_to_name, all_locations
 #from typing import TYPE_CHECKING
 from pkgutil import get_data
+
 #if TYPE_CHECKING:
 #from . import ActraiserWorld
 
@@ -149,7 +150,8 @@ def patch_rom(world: World, rom: ActraiserProcedurePatch):
             #     i = i + 1
         
     def randomize_palettes():
-        from .palette_data import colorsets, pal_sources, single_color
+        from .palette_data import pal_sources
+        from .palette_colors import colorsets, single_color
 
         for object in pal_sources:
             rand_colorset = world.random.choice(list(colorsets[pal_sources[object][0]].keys()))

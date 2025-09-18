@@ -163,7 +163,7 @@ location_data_table: Dict[str, BomberTLocationData] = {
     "Alpha - Pommy": BomberTLocationData(
         region="Alpha",
         type="karabon",
-        code=0x1C2A24,
+        code=0x1C2A90,
         address=0x352A2,
         mask=0x10,
     ),
@@ -771,9 +771,9 @@ location_data_table: Dict[str, BomberTLocationData] = {
     "Beta - Ralph's Challenge": BomberTLocationData(
         region="Beta",
         type="event",
-        code=0x1C2976,
+        code=0x1C2975,
         address=0x35297,
-        mask=0x40,
+        mask=0x20,
     ),
     "Omega - Fed Morg": BomberTLocationData(
         region="Omega",
@@ -920,6 +920,13 @@ rock_location_data_table: Dict[str, BomberTLocationData] = {
         type="rock",
         code=0x1C3075,
         address=0x35307,
+        mask=0x20,
+    ),
+    "T Forest - Rock": BomberTLocationData(
+        region="TForest",
+        type="rock",
+        code=0x1C3085,
+        address=0x35308,
         mask=0x20,
     ),
 

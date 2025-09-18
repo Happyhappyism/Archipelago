@@ -97,7 +97,14 @@ def write_tokens(world:World, patch:BombQuestProcedurePatch):
     if world.options.music_shuffle:
         patch.write_token(APTokenTypes.WRITE, 0x487A, ramdomize_table(music_table,2))
         patch.write_token(APTokenTypes.WRITE, 0x108B2, ramdomize_table(extra_music_table,2))
-    
+    if world.options.palette_random:
+        from .palette_colors import single_color
+        from .palette_data import single_pal_sources
+        for offset in range(0x483F8, 0x484D8, 0x02):
+            patch.write_token(APTokenTypes.WRITE, offset, bytearray(world.random.choice(single_color)) )
+            for offset in single_pal_sources:
+                patch.write_token(APTokenTypes.WRITE, offset, bytearray(world.random.choice(single_color))  )
+        pass
     # Write Card Trade Check
     from .Items import item_card_index
     from .rom_data import txt_tbl

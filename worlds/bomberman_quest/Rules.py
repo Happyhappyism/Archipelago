@@ -6,7 +6,7 @@ if TYPE_CHECKING:
     from . import BombQuestWorld
 
 def can_jump(state, player):
-    return state.has("Jump Shoes", player) or state.has("Wings", player)
+    return state.has("Jump Shoes", player)
 
 def has_bomb_splash(state,player):
     return state.has("Flak Bomb", player) or state.has("Speed Bomb", player) or state.has("Homing Bomb", player) \

@@ -12,6 +12,7 @@ from .Rom import MD5Hash, BomberTProcedurePatch, write_tokens
 from .Rom import get_base_rom_path as get_base_rom_path
 from .Client import BomberTClient
 
+import logging
 import Utils
 import dataclasses
 import typing
@@ -20,6 +21,8 @@ import os
 import pkgutil
 import Patch
 import settings
+
+logger = logging.getLogger("Bomberman Tournament")
 
 class BomberTSettings(settings.Group):
     class RomFile(settings.UserFilePath):
@@ -73,8 +76,8 @@ class BomberTWorld(World):
         item_pool: List[BomberTItem] = []
         
         if self.options.random_fuse.value:
-            from .Items import kara_hints
-            karalist = kara_hints
+            from .Items import fuse_karas
+            karalist = fuse_karas
             self.random.shuffle(karalist)
             fuse_items = ["Beta - Fuse Fangs", "Beta - Fuse Sea", "Beta - Fuse Dragon", "Beta - Fuse SeaWing"]
             for x in range(4):
@@ -89,6 +92,8 @@ class BomberTWorld(World):
                 "Beta - Fuse SeaWing": ["Youni", "Youno"]
             }
 
+        logging.warning(f"{self.fusion_dict}")
+        
         for name, item in item_data_table.items():
             if item.code and item.can_create(self):
                 for x in range(item.num_exist):
@@ -202,17 +207,17 @@ class BomberTWorld(World):
             entrance = self.multiworld.get_entrance(entrance_name, player)
             entrance.access_rule = rule
 
-        location_rules = get_location_rules(player)
+        location_rules = get_location_rules(player, self.fusion_dict)
         for location in self.multiworld.get_locations(player):
             name = location.name
             #if name in location_rules and location_data_table[name].can_create(self.multiworld, player):
             if name in location_rules:
                 location.access_rule = location_rules[name]
-        location_rules = fusion_rules(player,self.fusion_dict)
-        for location in self.multiworld.get_locations(player):
-            name = location.name
-            if name in location_rules:
-                location.access_rule = location_rules[name]
+        #location_rules = fusion_rules(player,self.fusion_dict)
+        #for location in self.multiworld.get_locations(player):
+        #    name = location.name
+        #    if name in location_rules:
+        #        location.access_rule = location_rules[name]
         # Completion condition.
         self.multiworld.completion_condition[self.player] = lambda state: state.has("MAX", self.player)
 

@@ -2,36 +2,41 @@ from typing import Callable, TYPE_CHECKING
 
 from BaseClasses import CollectionState
 
+from .Items import kara_hints
+
+import logging
+logger = logging.getLogger("Bomberman Tournament")
+
 if TYPE_CHECKING:
     from . import BomberTWorld
 
-KARA_ITEMS = [
-    "Pommy",
-    "Ceedrun",
-    "Elifan",
-    "Fangs",
-    "Sharkun",
-    "Th Liger",
-    "Kai-man",
-    "TwinDrag",
-    "P Nucklz",
-    "P Sea",
-    "ThoughGuy",
-    "P Beast",
-    "Pteradon",
-    "Dorako",
-    "P Dragon",
-    "Youno",
-    "Sibaloon",
-    "P Animal",
-    "Unagi",
-    "Elekong",
-    "Youni",
-    "Seawing",
-    "KameKing",
-    "MarinGon",
-    "Firekong",
-]
+# FUSE_KARAS = [
+#     "Pommy",
+#     "Ceedrun",
+#     "Elifan",
+#     #"Fangs",
+#     "Sharkun",
+#     "Th Liger",
+#     "Kai-man",
+#     "TwinDrag",
+#     "P Nucklz",
+#     #"P Sea",
+#     "ToughGuy",
+#     "P Beast",
+#     "Pteradon",
+#     "Dorako",
+#     #"P Dragon",
+#     "Youno",
+#     "Sibaloon",
+#     "P Animal",
+#     "Unagi",
+#     "Elekong",
+#     "Youni",
+#     #"Seawing",
+#     "KameKing",
+#     "MarinGon",
+#     "Firekong",
+# ]
 
 def plasma_clear_rules(state, player):
     return state.has("Dorako", player) and state.has("Sharkun", player) and state.has("Elifan", player) and  state.has("ToughGuy", player)
@@ -47,20 +52,13 @@ def general_sid_rules(state,player):
         (state.has("Youno", player) and state.has("Youni", player))
     )
 
-def fusion_rules(player, fusedict):
-    return {
-        # Fusions
-        "Beta - Fuse Fangs": 
-            lambda state: state.has(fusedict["Beta - Fuse Fangs"][0], player) and state.has(fusedict["Beta - Fuse Fangs"][1], player),
-        "Beta - Fuse Sea":
-            lambda state: state.has(fusedict["Beta - Fuse Sea"][0], player) and state.has(fusedict["Beta - Fuse Sea"][1], player),
-        "Beta - Fuse Dragon":
-            lambda state: state.has(fusedict["Beta - Fuse Dragon"][0], player) and state.has(fusedict["Beta - Fuse Dragon"][1], player),
-        "Beta - Fuse SeaWing":
-            lambda state: state.has(fusedict["Beta - Fuse SeaWing"][0], player) and state.has(fusedict["Beta - Fuse SeaWing"][1], player),
-    }
+# def fusion_rules(player, fusedict):
+#     return {
+#         # Fusions
+#         }
 
 def get_region_rules(player):
+    
     return{
         "Alpha -> Plains":
             lambda state: state.has("Pommy", player),
@@ -138,7 +136,8 @@ def get_region_rules(player):
             lambda state: state.has("Magnet Door Key", player) or state.has("Zone Key", player),
     }
 
-def get_location_rules(player):
+def get_location_rules(player, fusedict):
+    logger.warning(f"{fusedict["Beta - Fuse Fangs"][0]}, {fusedict["Beta - Fuse Fangs"][1]}")
     return {
         "Alpha - Return Ring":
             lambda state: state.has("Ring", player),
@@ -165,7 +164,7 @@ def get_location_rules(player):
         "Finish Step Counter":
             lambda state: state.has("Stepcounter", player),
         "Colosseum Streak":
-            lambda state: state.has_from_list(KARA_ITEMS, player,5),
+            lambda state: state.has_from_list(kara_hints, player,5),
 
 
         # Karabons
@@ -282,6 +281,18 @@ def get_location_rules(player):
             lambda state: state.has("SeaWing",player) and state.has("Sharkun", player),
         "Fantasy - Brain Bomber Defeated":
             lambda state: fantasy_clear_rules(state, player),
+
+        # Fusions
+        "Beta - Fuse Fangs": 
+            lambda state: state.has(fusedict["Beta - Fuse Fangs"][0], player) and state.has(fusedict["Beta - Fuse Fangs"][1], player),
+        "Beta - Fuse Sea":
+            lambda state: state.has(fusedict["Beta - Fuse Sea"][0], player) and state.has(fusedict["Beta - Fuse Sea"][1], player),
+        "Beta - Fuse Dragon":
+            lambda state: state.has(fusedict["Beta - Fuse Dragon"][0], player) and state.has(fusedict["Beta - Fuse Dragon"][1], player),
+        "Beta - Fuse SeaWing":
+            #lambda state: state.has("Th Liger", player) and state.has("TwinDrag", player),
+            lambda state: state.has(fusedict["Beta - Fuse SeaWing"][0], player) and state.has(fusedict["Beta - Fuse SeaWing"][1], player),
+
         
         #Rocks
         "L Forest - Side Rock":
@@ -320,5 +331,6 @@ def get_location_rules(player):
             lambda state: state.has("Elifan", player),
         "LavaPool - Rock":
             lambda state: state.has("Elifan", player),
-        
+        "T Forest - Rock":
+            lambda state: state.has("Elifan", player),
     }
